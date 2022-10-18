@@ -5,7 +5,7 @@ import RoughlyUI
 struct RoughlyApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(inputValue: "")
         }
     }
 }
