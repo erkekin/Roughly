@@ -2,23 +2,23 @@ import SwiftUI
 import RoughlyKit
 
 public struct ContentView: View {
-    @State var inputValue: String = ""
     private var measures: [RoughlyKit.Category]
     
-    @State var units = Units(
-        data: [
-            .init(title: "Area", rows: [UnitArea.squareMeters, UnitArea.squareKilometers, UnitArea.squareMiles, UnitArea.squareYards]),
-            .init(title: "Weight", rows: [UnitMass.grams, UnitMass.kilograms, UnitMass.pounds, UnitMass.carats, UnitMass.ounces])
-        ],
-        favorites: ("Favorites", [UnitArea.squareMeters, UnitMass.grams]),
-        selected: UnitArea.squareMeters,
-        recentSelected: ("Recent", [UnitArea.squareMeters])
-    )
+    @State var units: Units
     @State var showModal =  false
     
-    public init(inputValue: String) {
-        self.inputValue = inputValue
+    public init(inputValue: String, unit: Unit) {
         measures = Category.allCases
+        units = Units(
+            inputValue: inputValue,
+            data: [
+                .init(title: "Area", rows: [UnitArea.squareMeters, UnitArea.squareKilometers, UnitArea.squareMiles, UnitArea.squareYards]),
+                .init(title: "Weight", rows: [UnitMass.grams, UnitMass.kilograms, UnitMass.pounds, UnitMass.carats, UnitMass.ounces])
+            ],
+            favorites: ("Favorites", [UnitArea.squareMeters, UnitMass.grams]),
+            selected: unit,
+            recentSelected: ("Recent", [UnitArea.squareMeters])
+        )
     }
     
     enum FocusField: Hashable {
@@ -30,7 +30,7 @@ public struct ContentView: View {
     public var body: some View {
         NavigationStack {
             HStack{
-                TextField(text: $inputValue, axis: .horizontal) {
+                TextField(text: $units.inputValue, axis: .horizontal) {
                     Text("Enter value")
                 }
                 .focused($focusedField, equals: .field)
@@ -54,7 +54,7 @@ public struct ContentView: View {
                 
             }.padding()
             Spacer()
-            if let val = Double(inputValue) {
+            if let val = Double(units.inputValue) {
                 let sorted = measures
                     .filter({ category in
                         switch category {
@@ -62,13 +62,13 @@ public struct ContentView: View {
                             guard let selectedUnit = units.selected as? UnitMass else {return false}
                             let measure = Measurement(value: val, unit: selectedUnit)
                             let converted = weight.times(measure).value
-                            return converted > 1 && converted < 10
+                            return converted > 0.9 && converted < 11
                             
                         case let .area(area):
                             guard let selectedUnit = units.selected as? UnitArea else {return false}
                             let measure = Measurement(value: val, unit: selectedUnit)
                             let converted = area.times(measure).value
-                            return converted > 1 && converted < 10
+                            return converted > 0.9 && converted < 11
                         }
                     })
                     .sorted { lhs, rhs in
@@ -86,44 +86,15 @@ public struct ContentView: View {
                 
                 List(sorted) { category in
                     VStack(alignment: .leading) {
-                        Text("\(category.times(unit: units.selected, val: val)!)").font(.title)
-                        Text(category.shortDesc).font(.title)
+                        UnitRow(
+                            measurement: Measurement(value: Double(category.times(unit: units.selected, val: val) ?? 0), unit: category.unit)
+                        )
                     }
                 }
             }
         }
-        
     }
 }
-
-struct UnitsView: View {
-    @Binding var units: Units
-    
-    public var body: some View {
-        NavigationStack {
-            List(units.allSections) { section in
-                Section(section.title) {
-                    ForEach(section.rows, id: \.symbol) { row in
-                        Button(action: {
-                            units.selected = row
-                        }) {
-                            HStack {
-                                Text(row.symbol)
-                                Spacer()
-                                if units.selected == row {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                        .foregroundColor(.black)
-                    }
-                }
-            }
-            .navigationBarTitle("Choose a unit", displayMode: .large)
-        }
-    }
-}
-
 
 struct Units {
     struct Section: Identifiable, Hashable {
@@ -136,6 +107,7 @@ struct Units {
         let rows: [Unit]
     }
     
+    var inputValue: String
     let data: [Section]
     var favorites: (String, [Unit])
     var selected: Unit
@@ -158,7 +130,7 @@ extension Array<Units.Section>: Identifiable {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView(inputValue: "500")
+        ContentView(inputValue: "5", unit: UnitMass.kilograms)
     }
 }
 

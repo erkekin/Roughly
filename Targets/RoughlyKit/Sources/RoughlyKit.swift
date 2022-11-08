@@ -21,8 +21,6 @@ public enum Category: Hashable, Identifiable, CaseIterable {
     public var id: Self { self }
     
     public enum Area: RoughlyUnit {
-        public typealias MyUnit = UnitArea
-        
         case trafalgarSquare
         case tennisCourt
         case footballArea
@@ -31,7 +29,7 @@ public enum Category: Hashable, Identifiable, CaseIterable {
         case dinnerPlate
         case iPhoneScreenDisplay
         
-        public var measurement: Measurement<MyUnit> {
+        public var measurement: Measurement<UnitArea> {
             switch self {
             case .trafalgarSquare: return Measurement(value: 12000, unit: .baseUnit())
             case .footballArea: return Measurement(value: 5351.215, unit: .baseUnit())
@@ -43,22 +41,21 @@ public enum Category: Hashable, Identifiable, CaseIterable {
             }
         }
         
-        public var unit: MyUnit {
+        public var unit: UnitArea {
+            let converter = UnitConverterLinear(coefficient: measurement.value)
             switch self {
-            case .trafalgarSquare: return MyUnit(symbol: "trafalgar square", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .footballArea: return MyUnit(symbol: "football ground", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .basketballCourt: return MyUnit(symbol: "basketball court", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .tennisCourt: return MyUnit(symbol: "tennis courts", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .kingSizeBed: return MyUnit(symbol: "king size bed", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .dinnerPlate: return MyUnit(symbol: "dinner plate", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .iPhoneScreenDisplay: return MyUnit(symbol: "iPhone screen display", converter: UnitConverterLinear(coefficient: measurement.value))
+            case .trafalgarSquare: return MyUnit(symbol: "Trafalgar square", converter: converter)
+            case .footballArea: return MyUnit(symbol: "football ground", converter: converter)
+            case .basketballCourt: return MyUnit(symbol: "basketball court", converter: converter)
+            case .tennisCourt: return MyUnit(symbol: "tennis courts", converter: converter)
+            case .kingSizeBed: return MyUnit(symbol: "king size bed", converter: converter)
+            case .dinnerPlate: return MyUnit(symbol: "dinner plate", converter: converter)
+            case .iPhoneScreenDisplay: return MyUnit(symbol: "iPhone screen display", converter: converter)
             }
         }
     }
     
     public enum Weight: RoughlyUnit {
-        public typealias MyUnit = UnitMass
-        
         case cat
         case glassOfWater
         case tablespoon
@@ -79,15 +76,16 @@ public enum Category: Hashable, Identifiable, CaseIterable {
             }
         }
         
-        public var unit: MyUnit {
+        public var unit: UnitMass {
+            let converter = UnitConverterLinear(coefficient: measurement.value)
             switch self {
-            case .panda: return MyUnit(symbol: "panda", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .cat: return MyUnit(symbol: "cat", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .tablespoon: return MyUnit(symbol: "tablespoon", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .humanBrain: return MyUnit(symbol: "human brain", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .glassOfWater: return MyUnit(symbol: "glass of water", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .aaaBattery: return MyUnit(symbol: "battery (AAA)", converter: UnitConverterLinear(coefficient: measurement.value))
-            case .paper: return MyUnit(symbol: "Paper", converter: UnitConverterLinear(coefficient: measurement.value))
+            case .panda: return MyUnit(symbol: "panda", converter: converter)
+            case .cat: return MyUnit(symbol: "cat", converter: converter)
+            case .tablespoon: return MyUnit(symbol: "tablespoon", converter: converter)
+            case .humanBrain: return MyUnit(symbol: "human brain", converter: converter)
+            case .glassOfWater: return MyUnit(symbol: "glass of water", converter: converter)
+            case .aaaBattery: return MyUnit(symbol: "battery (AAA)", converter: converter)
+            case .paper: return MyUnit(symbol: "paper", converter: converter)
             }
         }
     }
@@ -102,24 +100,25 @@ public enum Category: Hashable, Identifiable, CaseIterable {
         }
     }
     
-    public var shortDesc: String {
+    public var unit: Unit {
         switch self {
-        case let .area(area): return area.unit.symbol
-        case let .weight(weight): return weight.unit.symbol
+        case let .area(area): return area.unit
+        case let .weight(weight): return weight.unit
         }
     }
     
-    public func times(unit: Unit, val: Double) -> Int? {
+    public func times(unit: Unit, val: Double) -> Double? {
         switch self {
         case let .weight(weight):
             if let selectedUnit = unit as? UnitMass {
                 let measure = Measurement(value: val, unit: selectedUnit)
-                return Int(round(weight.times(measure).value))
+                return weight.times(measure).value
             }
+            
         case let .area(area):
             if let selectedUnit = unit as? UnitArea {
                 let measure = Measurement(value: val, unit: selectedUnit)
-               return Int(round(area.times(measure).value))
+                return area.times(measure).value
             }
         }
         return nil
