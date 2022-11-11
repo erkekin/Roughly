@@ -71,23 +71,23 @@ public struct ContentView: View {
                             return converted > 0.9 && converted < 11
                         }
                     })
-                    .sorted { lhs, rhs in
-                        switch (lhs, rhs) {
-                        case let (.area(area1), .area(area2)):
-                            return area1.measurement < area2.measurement
-                            
-                        case let (.weight(weight1), .weight(weight2)):
-                            return weight1.measurement < weight2.measurement
-                            
-                        case (.weight, .area), (.area, .weight):
-                            return false
-                        }
-                    }
+//                    .sorted { lhs, rhs in
+//                        switch (lhs, rhs) {
+//                        case let (.area(area1), .area(area2)):
+//                            return area1.measurement < area2.measurement
+//
+//                        case let (.weight(weight1), .weight(weight2)):
+//                            return weight1.measurement < weight2.measurement
+//
+//                        case (.weight, .area), (.area, .weight):
+//                            return false
+//                        }
+//                    }
                 
                 List(sorted) { category in
                     VStack(alignment: .leading) {
                         UnitRow(
-                            measurement: Measurement(value: Double(category.times(unit: units.selected, val: val) ?? 0), unit: category.unit)
+                            measure: Measure(measurement: Measurement(value: Double(category.times(unit: units.selected, val: val) ?? 0), unit: category.unit))
                         )
                     }
                 }

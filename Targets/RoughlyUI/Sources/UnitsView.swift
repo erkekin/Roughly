@@ -1,36 +1,74 @@
 import Foundation
 import SwiftUI
 
-struct UnitRow: View {
-//    let formatter = NumberFormatter()
-//    formatter.numberStyle = .decimal
-//    formatter.maximumFractionDigits = 2
-//
-//    let number = NSNumber(value: value)
-//    let formattedValue = formatter.string(from: number)!
-    let measurement: Measurement<Unit>
+let formatterDouble: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = 2
+    return formatter
+}()
 
-    @State var isExpanded: Bool = false
+let formatterInt: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = 0
+    return formatter
+}()
+
+let formatterPercentage: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .percent
+    formatter.maximumFractionDigits = 3
+    return formatter
+}()
+
+struct Measure {
+    let measurement: Measurement<Unit>
+    var roundedIntValue: String {
+        formatterInt.string(from: NSNumber(value: measurement.value)) ?? ""
+    }
+    
+    var roundedDoubleValue: String {
+        formatterDouble.string(from: NSNumber(value: measurement.value)) ?? ""
+    }
+    
+    var percentage: String? {
+        let intDouble = Double(roundedIntValue)
+        let doubleDouble = Double(roundedDoubleValue)
+        guard let intDouble, let doubleDouble else {return nil}
+        let difference = (intDouble - doubleDouble) / 100
+        let formatted = formatterPercentage.string(from: NSNumber(value: difference))
+        return formatted
+    }
+}
+
+struct UnitRow: View {
+    let measure: Measure
+    
+    @State private var isExpanded: Bool = false
     
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading) {
-                Text("\(Int(round(measurement.value))) \(measurement.unit.symbol)")
-                    .font(.title2)
-                    .frame(alignment: .leading)
-                    .padding()
-                
-                if isExpanded {
-                    HStack {
-                        Text("\(measurement.value)").font(.body)
-                    }
+        VStack(alignment: .trailing) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading) {
+                    Text("\(measure.roundedIntValue) \(measure.measurement.unit.symbol)")
+                        .font(.title2)
+                        .frame(alignment: .leading)
+                        .padding(.vertical, 8)
+                }
+                Spacer()
+                Button {
+                    isExpanded.toggle()
+                } label: {
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                 }
             }
-            Spacer()
-            Button {
-                isExpanded.toggle()
-            } label: {
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+            
+            if isExpanded {
+                VStack(alignment: .trailing) {
+                    Text("\(measure.roundedDoubleValue) times").font(.body).frame(alignment: .trailing)
+                    Text("\(measure.percentage!) bias").font(.body).frame(alignment: .trailing)
+                }
             }
         }
     }
