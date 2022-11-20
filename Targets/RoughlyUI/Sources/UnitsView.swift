@@ -1,46 +1,6 @@
 import Foundation
 import SwiftUI
-
-let formatterDouble: NumberFormatter = {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .decimal
-    formatter.maximumFractionDigits = 2
-    return formatter
-}()
-
-let formatterInt: NumberFormatter = {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .decimal
-    formatter.maximumFractionDigits = 0
-    return formatter
-}()
-
-let formatterPercentage: NumberFormatter = {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .percent
-    formatter.maximumFractionDigits = 3
-    return formatter
-}()
-
-struct Measure {
-    let measurement: Measurement<Unit>
-    var roundedIntValue: String {
-        formatterInt.string(from: NSNumber(value: measurement.value)) ?? ""
-    }
-    
-    var roundedDoubleValue: String {
-        formatterDouble.string(from: NSNumber(value: measurement.value)) ?? ""
-    }
-    
-    var percentage: String? {
-        let intDouble = Double(roundedIntValue)
-        let doubleDouble = Double(roundedDoubleValue)
-        guard let intDouble, let doubleDouble else {return nil}
-        let difference = (intDouble - doubleDouble) / 100
-        let formatted = formatterPercentage.string(from: NSNumber(value: difference))
-        return formatted
-    }
-}
+import RoughlyKit
 
 struct UnitRow: View {
     let measure: Measure
@@ -51,7 +11,7 @@ struct UnitRow: View {
         VStack(alignment: .trailing) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading) {
-                    Text("\(measure.roundedIntValue) \(measure.measurement.unit.symbol)")
+                    Text("\(measure.roundedIntValue) \(measure.title)")
                         .font(.title2)
                         .frame(alignment: .leading)
                         .padding(.vertical, 8)
@@ -66,8 +26,12 @@ struct UnitRow: View {
             
             if isExpanded {
                 VStack(alignment: .trailing) {
-                    Text("\(measure.roundedDoubleValue) times").font(.body).frame(alignment: .trailing)
-                    Text("\(measure.percentage!) bias").font(.body).frame(alignment: .trailing)
+                    if let roundedDoubleValue = measure.roundedDoubleValue {
+                        Text("\(roundedDoubleValue) times").font(.body).frame(alignment: .trailing)
+                    }
+                    if let percentage = measure.percentage {
+                        Text("\(percentage) bias").font(.body).frame(alignment: .trailing)
+                    }
                 }
             }
         }
@@ -76,6 +40,7 @@ struct UnitRow: View {
 
 struct UnitsView: View {
     @Binding var units: Units
+    @Binding var shown: Bool
     
     public var body: some View {
         NavigationStack {
@@ -84,6 +49,7 @@ struct UnitsView: View {
                     ForEach(section.rows, id: \.symbol) { row in
                         Button(action: {
                             units.selected = row
+                            shown = false
                         }) {
                             HStack {
                                 Text(row.symbol)
@@ -93,7 +59,6 @@ struct UnitsView: View {
                                 }
                             }
                         }
-                        .foregroundColor(.black)
                     }
                 }
             }
